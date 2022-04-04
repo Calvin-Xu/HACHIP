@@ -1,6 +1,7 @@
 #ifndef HACHIP_H
 #define HACHIP_H
 #include <stdbool.h>
+#include <stddef.h>
 
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
@@ -45,7 +46,7 @@ void init_display(unsigned int width, unsigned int height);
 
 void init_chip(void);
 
-void load_program(unsigned short *);
+void load_program(unsigned short *program, size_t size);
 
 void emulate_cycle(void);
 

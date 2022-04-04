@@ -3,6 +3,7 @@
 #include "interrupts.h"
 #include "keyboard.h"
 #include "malloc.h"
+#include "printf.h"
 #include "ps2.h"
 #include "roms.h"
 #include "strings.h"
@@ -10,18 +11,18 @@
 void init_keyboard(void) {
   gpio_init();
   keyboard_init(KEYBOARD_CLOCK, KEYBOARD_DATA);
+  interrupts_init();
+  keyboard_use_interrupts();
+  interrupts_global_enable();
   // https://wiki.osdev.org/%228042%22_PS/2_Controller#PS.2F2_Controller_Commands
   ps2_device_t *keyboard = ps2_new(KEYBOARD_CLOCK, KEYBOARD_DATA);
   while (true) {
-    if (keyboard_read_scancode() == 0x55) {
+    if (keyboard_read_scancode() == 0xAA) {
       ps2_write(keyboard, 0x55);
       break;
     }
   }
   free(keyboard);
-  interrupts_init();
-  keyboard_use_interrupts();
-  interrupts_global_enable();
 }
 
 void init_display(unsigned int width, unsigned int height) {
@@ -46,11 +47,13 @@ void init_chip(void) {
   }
 }
 
-void load_program(unsigned short *program) {
-  memcpy(CHIP.MEM + 0x200, &program, sizeof(program));
+void load_program(unsigned short *program, size_t size) {
+  memcpy(CHIP.MEM + 0x200, program, size);
 }
 
-void emulate_cycle(void) {}
+void emulate_cycle(void) {
+  CHIP.OPCODE = CHIP.MEM[CHIP.PC] | CHIP.MEM[CHIP.PC + 1] << 8;
+}
 
 void draw_graphics(void);
 
@@ -60,7 +63,7 @@ int main() {
   init_keyboard();
   init_display(DISPLAY_WIDTH, DISPLAY_HEIGHT);
   init_chip();
-  load_program(IBM_LOGO);
+  load_program(IBM_LOGO, sizeof(IBM_LOGO));
   while (true) {
     emulate_cycle();
     set_keys();
