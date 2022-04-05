@@ -6,9 +6,6 @@
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
 
-#define PHYSICAL_WIDTH 64
-#define PHYSICAL_HEIGHT 32
-
 // https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#stack
 // https://multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/
 typedef struct {
@@ -39,10 +36,6 @@ typedef struct {
 } chip_t;
 
 chip_t CHIP;
-
-void init_keyboard(void);
-
-void init_display(unsigned int width, unsigned int height);
 
 void init_chip(void);
 

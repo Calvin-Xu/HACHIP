@@ -4,7 +4,7 @@ CFLAGS = -I$(CS107E)/include -g -Wall -O2 -std=c99 -ffreestanding -mapcs-frame -
 LDFLAGS = -nostdlib -T memmap -L$(CS107E)/lib
 LDLIBS = -lpi -lgcc
 
-IOBJECTS = 
+IOBJECTS = peripherals.o
 
 all : $(NAME).bin
 
