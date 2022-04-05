@@ -50,6 +50,8 @@ void load_program(unsigned short *program, size_t size);
 
 void emulate_cycle(void);
 
+void run_opcode(unsigned short opcode);
+
 void draw_graphics(void);
 
 void set_keys(void);
