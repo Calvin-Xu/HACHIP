@@ -4,6 +4,9 @@
 #include "roms.h"
 #include "strings.h"
 
+#define DISPLAY_WIDTH 64
+#define DISPLAY_HEIGHT 32
+
 #define FONT_START 0x50
 void init_chip(void) {
   CHIP.OPCODE = 0;
@@ -14,7 +17,7 @@ void init_chip(void) {
   memset(CHIP.V, 0, sizeof(CHIP.V));
   memset(CHIP.STACK, 0, sizeof(CHIP.STACK));
   for (int i = 0; i < DISPLAY_HEIGHT; i++) {
-    memset(CHIP.PIXELS + i, 0, DISPLAY_WIDTH);
+    memset(CHIP.PIXELS + i, false, DISPLAY_WIDTH);
   }
   for (int i = 0; i < 80; i++) {
     CHIP.MEM[i + FONT_START] = font[i];
@@ -22,30 +25,52 @@ void init_chip(void) {
 }
 
 void load_program(unsigned short *program, size_t size) {
+  // roms are currently stored as array of unsigned short
+  // CHIP-8 is big endian; convert when loading
+  for (int i = 0; i < size; i++) {
+    unsigned short val = *(program + i);
+    *(program + i) = (val >> 8) | (val << 8);
+  }
   memcpy(CHIP.MEM + 0x200, program, size);
 }
 
 void emulate_cycle(void) {
-  printf("Cycle start:\n");
-  CHIP.OPCODE = CHIP.MEM[CHIP.PC] | CHIP.MEM[CHIP.PC + 1] << 8;
+  printf("---Cycle start:---\n");
+  CHIP.OPCODE = CHIP.MEM[CHIP.PC] << 8 | CHIP.MEM[CHIP.PC + 1];
   CHIP.PC += 2;
-  printf("Opecode: %04x\n", CHIP.OPCODE);
+  printf("Opcode: %04x\n", CHIP.OPCODE);
   run_opcode(CHIP.OPCODE);
-  printf("Cycle end:\n");
+  printf("PC: %d\nI:%d\n", CHIP.PC, CHIP.I);
+  for (int i = 0; i < 16; i++) {
+    printf("V[%x]: %d\n", i, CHIP.V[i]);
+  }
 }
 
 // https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set
 void run_opcode(unsigned short opcode) {
   switch (opcode & 0xF000) {
   case 0:
-    // TODO:
-    // 0NNN: Execute machine language subroutine at address NNN
-    // 00E0: Clear the screen
-    // 00EE: Return from a subroutine
+    if (opcode & 0x0F00) {
+      // TODO:
+      // 0NNN: Execute machine language subroutine at address NNN
+      break;
+    } else {
+      if (opcode & 0x000F) {
+        // TODO:
+        // 00EE: Return from a subroutine
+      } else {
+        // 00E0: Clear the screen
+        for (int i = 0; i < DISPLAY_HEIGHT; i++) {
+          memset(CHIP.PIXELS + i, false, DISPLAY_WIDTH);
+        }
+        clear_display();
+        printf("Executed 00E0\n");
+      }
+    }
     break;
   case 0x1000:
-    // TODO:
     // 1NNN: Jump to address NNN
+    CHIP.PC = opcode & 0x0FFF;
     break;
   case 0x2000:
     // TODO:
@@ -67,12 +92,15 @@ void run_opcode(unsigned short opcode) {
     // to the value of register VY
     break;
   case 0x6000:
-    // TODO:
     // 6XNN: Store number NN in register VX
+    CHIP.V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+    printf("Executed 6XNN\n");
     break;
   case 0x7000:
-    // TODO:
     // 7XNN: Add the value NN to register VX
+    // does not set carry flag
+    CHIP.V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
+    printf("Executed 7XNN\n");
     break;
   case 0x8000:
     // TODO:
@@ -103,8 +131,9 @@ void run_opcode(unsigned short opcode) {
     //       equal to the value of register VY
     break;
   case 0xA000:
-    // TODO:
     // ANNN: Store memory address NNN in register I
+    CHIP.I = opcode & 0x0FFF;
+    printf("Executed ANNN\n");
     break;
   case 0xB000:
     // TODO:
@@ -115,11 +144,38 @@ void run_opcode(unsigned short opcode) {
     // CXNN: Set VX to a random number with a mask of NN
     break;
   case 0xD000:
-    // TODO:
     // DXYN: Draw a sprite at position VX, VY with N bytes of sprite data
     //       starting at the address stored in I
     //       Set VF to 01 if any set pixels are changed to unset, and 00
     //       otherwise
+    {
+      int x = CHIP.V[(opcode & 0x0F00) >> 8] & (DISPLAY_WIDTH - 1);
+      int y = CHIP.V[(opcode & 0x00F0) >> 4] & (DISPLAY_HEIGHT - 1);
+      int height = opcode & 0x000F;
+      CHIP.V[0xf] = 0;
+      for (int row = 0; row < height; row++) {
+        unsigned char sprite = CHIP.MEM[CHIP.I + row];
+        for (int col = 0; col < 8; col++) {
+          if (sprite & (0x80 >> col)) {
+            bool pixel = CHIP.PIXELS[y + row][x + col];
+            if (pixel) {
+              CHIP.V[0xF] = 1;
+              draw_pixel(x + col, y + row, false);
+            } else {
+              draw_pixel(x + col, y + row, true);
+            }
+            CHIP.PIXELS[y + row][x + col] = !pixel;
+          }
+          if (x + col == DISPLAY_WIDTH) {
+            break;
+          }
+        }
+        if (y + row == DISPLAY_HEIGHT) {
+          break;
+        }
+      }
+      printf("Executed DXYN\n");
+    }
     break;
   case 0xE000:
     // TODO:
@@ -148,8 +204,6 @@ void run_opcode(unsigned short opcode) {
     break;
   }
 }
-
-void draw_graphics(void);
 
 void set_keys(void) {}
 

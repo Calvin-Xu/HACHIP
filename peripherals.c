@@ -5,8 +5,11 @@
 #include "malloc.h"
 #include "ps2.h"
 
-#define PHYSICAL_WIDTH 64
-#define PHYSICAL_HEIGHT 32
+#define PHYSICAL_WIDTH 800
+#define PHYSICAL_HEIGHT 480
+
+int k_display_width;
+int k_display_height;
 
 void init_keyboard(void) {
   gpio_init();
@@ -25,7 +28,17 @@ void init_keyboard(void) {
   free(keyboard);
 }
 
-void init_display(unsigned int width, unsigned int height) {
-  gl_init(width, height, GL_DOUBLEBUFFER);
+void init_display(int width, int height) {
+  k_display_width = width;
+  k_display_height = height;
+  gl_init(PHYSICAL_WIDTH, PHYSICAL_HEIGHT, GL_SINGLEBUFFER);
   gl_clear(GL_BLACK);
+}
+
+void clear_display(void) { gl_clear(GL_BLACK); }
+
+void draw_pixel(int x, int y, bool is_on) {
+  int k_scale = PHYSICAL_WIDTH / k_display_width;
+  gl_draw_rect(x * k_scale, y * k_scale, k_scale, k_scale,
+               is_on ? GL_WHITE : GL_BLACK);
 }

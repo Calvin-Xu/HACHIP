@@ -3,9 +3,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define DISPLAY_WIDTH 64
-#define DISPLAY_HEIGHT 32
-
 // https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#stack
 // https://multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/
 typedef struct {
@@ -14,7 +11,7 @@ typedef struct {
   // 0x000-0x1FF - interpreter & font
   // 0x200-0xFFF - program & RAM
   unsigned char MEM[4096];
-  // 16 8-bit (one byte) general-purpose variable registers
+  // 16 8-bit general-purpose variable registers
   // (V0 to VF)
   unsigned char V[16];
   // 16-bit index register I (point to mem location)
@@ -31,8 +28,6 @@ typedef struct {
   // two timer registers that decrement at 60 Hz
   unsigned char DELAY_TIMER;
   unsigned char SOUND_TIMER;
-  // set when graphics need to be redrawn
-  bool DRAW_FLAG;
 } chip_t;
 
 chip_t CHIP;
@@ -44,8 +39,6 @@ void load_program(unsigned short *program, size_t size);
 void emulate_cycle(void);
 
 void run_opcode(unsigned short opcode);
-
-void draw_graphics(void);
 
 void set_keys(void);
 
