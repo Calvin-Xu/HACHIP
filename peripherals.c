@@ -10,6 +10,9 @@
 
 int k_display_width;
 int k_display_height;
+int k_scale;
+int k_padding_x;
+int k_padding_y;
 
 void init_keyboard(void) {
   gpio_init();
@@ -31,6 +34,9 @@ void init_keyboard(void) {
 void init_display(int width, int height) {
   k_display_width = width;
   k_display_height = height;
+  k_scale = PHYSICAL_WIDTH / k_display_width;
+  k_padding_x = (PHYSICAL_WIDTH - k_scale * k_display_width) / 2;
+  k_padding_y = (PHYSICAL_HEIGHT - k_scale * k_display_height) / 2;
   gl_init(PHYSICAL_WIDTH, PHYSICAL_HEIGHT, GL_SINGLEBUFFER);
   gl_clear(GL_BLACK);
 }
@@ -38,9 +44,8 @@ void init_display(int width, int height) {
 void clear_display(void) { gl_clear(GL_BLACK); }
 
 void draw_pixel(int x, int y, bool is_on) {
-  int k_scale = PHYSICAL_WIDTH / k_display_width;
-  gl_draw_rect(x * k_scale, y * k_scale, k_scale, k_scale,
-               is_on ? GL_WHITE : GL_BLACK);
+  gl_draw_rect(x * k_scale + k_padding_x, y * k_scale + k_padding_y, k_scale,
+               k_scale, is_on ? GL_WHITE : GL_BLACK);
 }
 
 void set_keys(void) {}
