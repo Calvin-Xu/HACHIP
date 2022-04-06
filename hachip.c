@@ -13,7 +13,7 @@
 #define BNNN_LEGACY_BEHAVIOR false
 #define STR_LDR_LEGACY_BEHAVIOR false
 
-#define DEBUG true
+// #define DEBUG true
 
 #ifdef DEBUG
 #define DEBUG_PRINT(x) printf x
@@ -35,6 +35,7 @@ void init_chip(void) {
   for (int i = 0; i < DISPLAY_HEIGHT; i++) {
     memset(CHIP.PIXELS + i, false, DISPLAY_WIDTH);
   }
+  memset(CHIP.KEYPAD, false, 16);
   for (int i = 0; i < 80; i++) {
     CHIP.MEM[i + FONT_START] = font[i];
   }
@@ -374,15 +375,27 @@ void run_opcode() {
 #undef NN
 #undef NNN
 
-#define PROGRAM TEST_ROM
+#define PROGRAM KEYPAD_TEST
 int main() {
   init_keyboard();
   init_display(DISPLAY_WIDTH, DISPLAY_HEIGHT);
   init_chip();
   load_program(PROGRAM, sizeof(PROGRAM));
+  unsigned int last_decrement = 0;
   while (true) {
     emulate_cycle();
     set_keys(CHIP.KEYPAD);
+    unsigned int current_tick = timer_get_ticks();
+    if (current_tick - last_decrement >= 16666) {
+      if (CHIP.DELAY_TIMER > 0) {
+        CHIP.DELAY_TIMER--;
+      }
+      if (CHIP.SOUND_TIMER > 0) {
+        CHIP.SOUND_TIMER--;
+      }
+      last_decrement = current_tick;
+    }
+    // timer_delay_ms(12);
   }
   return 0;
 }
