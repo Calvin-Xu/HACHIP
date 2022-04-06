@@ -382,7 +382,7 @@ int main() {
   load_program(PROGRAM, sizeof(PROGRAM));
   while (true) {
     emulate_cycle();
-    set_keys();
+    set_keys(CHIP.KEYPAD);
   }
   return 0;
 }

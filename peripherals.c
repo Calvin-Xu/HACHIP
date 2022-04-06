@@ -48,4 +48,15 @@ void draw_pixel(int x, int y, bool is_on) {
                k_scale, is_on ? GL_WHITE : GL_BLACK);
 }
 
-void set_keys(void) {}
+// currently can only get 1 key
+void set_keys(bool *keypad) {
+  unsigned char keys[16] = {'1', '2', '3', '4', 'q', 'w', 'e', 'r',
+                            'a', 's', 'd', 'f', 'z', 'x', 'c', 'v'};
+  unsigned char key = keyboard_read_next();
+  if (key == 0) {
+    return;
+  }
+  for (int i = 0; i < 16; i++) {
+    *(keypad + i) = key == keys[i] ? true : false;
+  }
+}
