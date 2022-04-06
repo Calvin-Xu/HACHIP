@@ -24,7 +24,7 @@ typedef struct {
   // pixel states (64 * 32)
   bool (*PIXELS)[64];
   // hex keypad
-  unsigned char KEYPAD[16];
+  bool KEYPAD[16];
   // two timer registers that decrement at 60 Hz
   unsigned char DELAY_TIMER;
   unsigned char SOUND_TIMER;
@@ -38,9 +38,7 @@ void load_program(unsigned short *program, size_t size);
 
 void emulate_cycle(void);
 
-void run_opcode(unsigned short opcode);
-
-void set_keys(void);
+void run_opcode();
 
 unsigned char font[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0

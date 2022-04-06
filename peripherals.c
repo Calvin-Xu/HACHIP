@@ -42,3 +42,5 @@ void draw_pixel(int x, int y, bool is_on) {
   gl_draw_rect(x * k_scale, y * k_scale, k_scale, k_scale,
                is_on ? GL_WHITE : GL_BLACK);
 }
+
+void set_keys(void) {}

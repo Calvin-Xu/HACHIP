@@ -11,4 +11,6 @@ void clear_display(void);
 
 void draw_pixel(int x, int y, bool is_on);
 
+void set_keys(void);
+
 #endif
