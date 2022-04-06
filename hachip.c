@@ -12,7 +12,16 @@
 #define SHIFT_LEGACY_BEHAVIOR false
 #define BNNN_LEGACY_BEHAVIOR false
 #define STR_LDR_LEGACY_BEHAVIOR false
+
 #define DEBUG true
+
+#ifdef DEBUG
+#define DEBUG_PRINT(x) printf x
+#else
+#define DEBUG_PRINT(x)                                                         \
+  do {                                                                         \
+  } while (0)
+#endif
 
 #define FONT_START 0x50
 void init_chip(void) {
@@ -42,18 +51,14 @@ void load_program(unsigned short *program, size_t size) {
 }
 
 void emulate_cycle(void) {
-  if (DEBUG) {
-    printf("---Cycle start:---\n");
-  }
+  DEBUG_PRINT(("---Cycle start:---\n"));
   CHIP.OPCODE = CHIP.MEM[CHIP.PC] << 8 | CHIP.MEM[CHIP.PC + 1];
   CHIP.PC += 2;
   run_opcode();
-  if (DEBUG) {
-    printf("Opcode: %04x\n", CHIP.OPCODE);
-    printf("PC: %d\nI:%d\n", CHIP.PC, CHIP.I);
-    for (int i = 0; i < 16; i++) {
-      printf("V[%x]: %d\n", i, CHIP.V[i]);
-    }
+  DEBUG_PRINT(("Opcode: %04x\n", CHIP.OPCODE));
+  DEBUG_PRINT(("PC: %d\nI:%d\n", CHIP.PC, CHIP.I));
+  for (int i = 0; i < 16; i++) {
+    DEBUG_PRINT(("V[%x]: %d\n", i, CHIP.V[i]));
   }
 }
 
@@ -68,35 +73,35 @@ void run_opcode() {
     if (CHIP.OPCODE & 0x0F00) {
       // 0NNN: Execute machine language subroutine at address NNN
       // Unimplemented
-      printf("Executed 0NNN\n");
+      DEBUG_PRINT(("Executed 0NNN\n"));
       break;
     } else {
       if (CHIP.OPCODE & 0x000F) {
         // 00EE: Return from a subroutine
         assert(CHIP.SP > 0);
         CHIP.PC = CHIP.STACK[--CHIP.SP];
-        printf("Executed 00EE\n");
+        DEBUG_PRINT(("Executed 00EE\n"));
       } else {
         // 00E0: Clear the screen
         for (int i = 0; i < DISPLAY_HEIGHT; i++) {
           memset(CHIP.PIXELS + i, false, DISPLAY_WIDTH);
         }
         clear_display();
-        printf("Executed 00E0\n");
+        DEBUG_PRINT(("Executed 00E0\n"));
       }
     }
     break;
   case 0x1000:
     // 1NNN: Jump to address NNN
     CHIP.PC = NNN;
-    printf("Executed 1NNN\n");
+    DEBUG_PRINT(("Executed 1NNN\n"));
     break;
   case 0x2000:
     // 2NNN: Execute subroutine starting at address NNN
     assert(CHIP.SP < 15);
     CHIP.STACK[CHIP.SP++] = CHIP.PC;
     CHIP.PC = NNN;
-    printf("Executed 2NNN\n");
+    DEBUG_PRINT(("Executed 2NNN\n"));
     break;
   case 0x3000:
     // 3XNN: Skip the following instruction if the value of register VX equals
@@ -104,7 +109,7 @@ void run_opcode() {
     if (CHIP.V[X] == NN) {
       CHIP.PC += 2;
     }
-    printf("Executed 3XNN\n");
+    DEBUG_PRINT(("Executed 3XNN\n"));
     break;
   case 0x4000:
     // 4XNN: Skip the following instruction if the value of register VX is not
@@ -112,7 +117,7 @@ void run_opcode() {
     if (CHIP.V[X] != NN) {
       CHIP.PC += 2;
     }
-    printf("Executed 4XNN\n");
+    DEBUG_PRINT(("Executed 4XNN\n"));
     break;
   case 0x5000:
     // 5XY0: Skip the following instruction if the value of register VX is equal
@@ -120,40 +125,40 @@ void run_opcode() {
     if (CHIP.V[X] == CHIP.V[Y]) {
       CHIP.PC += 2;
     }
-    printf("Executed 5XY0\n");
+    DEBUG_PRINT(("Executed 5XY0\n"));
     break;
   case 0x6000:
     // 6XNN: Store number NN in register VX
     CHIP.V[X] = NN;
-    printf("Executed 6XNN\n");
+    DEBUG_PRINT(("Executed 6XNN\n"));
     break;
   case 0x7000:
     // 7XNN: Add the value NN to register VX
     // does not set carry flag
     CHIP.V[X] += NN;
-    printf("Executed 7XNN\n");
+    DEBUG_PRINT(("Executed 7XNN\n"));
     break;
   case 0x8000:
     switch (CHIP.OPCODE & 0x000F) {
     case 0:
       // 8XY0: Store the value of register VY in register VX
       CHIP.V[X] = CHIP.V[Y];
-      printf("Executed 8XY0\n");
+      DEBUG_PRINT(("Executed 8XY0\n"));
       break;
     case 1:
       // 8XY1: Set VX to VX OR VY
       CHIP.V[X] |= CHIP.V[Y];
-      printf("Executed 8XY1\n");
+      DEBUG_PRINT(("Executed 8XY1\n"));
       break;
     case 2:
       // 8XY2: Set VX to VX AND VY
       CHIP.V[X] &= CHIP.V[Y];
-      printf("Executed 8XY2\n");
+      DEBUG_PRINT(("Executed 8XY2\n"));
       break;
     case 3:
       // 8XY3: Set VX to VX XOR VY
       CHIP.V[X] ^= CHIP.V[Y];
-      printf("Executed 8XY3\n");
+      DEBUG_PRINT(("Executed 8XY3\n"));
       break;
     case 4:
       // 8XY4: Add the value of register VY to register VX
@@ -161,7 +166,7 @@ void run_opcode() {
       //       Set VF to 00 if a carry does not occur
       CHIP.V[0XF] = CHIP.V[Y] > (0xFF - CHIP.V[X]) ? 1 : 0;
       CHIP.V[X] += CHIP.V[Y];
-      printf("Executed 8XY4\n");
+      DEBUG_PRINT(("Executed 8XY4\n"));
       break;
     case 5:
       // 8XY5: Subtract the value of register VY from register VX
@@ -169,7 +174,7 @@ void run_opcode() {
       //       Set VF to 01 if a borrow does not occur
       CHIP.V[0xF] = CHIP.V[X] > CHIP.V[Y] ? 1 : 0;
       CHIP.V[X] -= CHIP.V[Y];
-      printf("Executed 8XY5\n");
+      DEBUG_PRINT(("Executed 8XY5\n"));
       break;
     case 6:
       // 8XY6: Store the value of register VY shifted right one bit in register
@@ -181,7 +186,7 @@ void run_opcode() {
       }
       CHIP.V[0xF] = CHIP.V[X] & 1;
       CHIP.V[X] >>= 1;
-      printf("Executed 8XY6\n");
+      DEBUG_PRINT(("Executed 8XY6\n"));
       break;
     case 7:
       // 8XY7: Set register VX to the value of VY minus VX
@@ -189,7 +194,7 @@ void run_opcode() {
       //       Set VF to 01 if a borrow does not occur
       CHIP.V[0xF] = CHIP.V[Y] > CHIP.V[X] ? 1 : 0;
       CHIP.V[X] = CHIP.V[Y] - CHIP.V[X];
-      printf("Executed 8XY7\n");
+      DEBUG_PRINT(("Executed 8XY7\n"));
       break;
     case 0xE:
       // 8XYE: Store the value of register VY shifted left one bit in register
@@ -201,7 +206,7 @@ void run_opcode() {
       }
       CHIP.V[0xF] = (CHIP.V[X] & 0x80) >> 7;
       CHIP.V[X] <<= 1;
-      printf("Executed 8XYE\n");
+      DEBUG_PRINT(("Executed 8XYE\n"));
       break;
     }
     break;
@@ -211,12 +216,12 @@ void run_opcode() {
     if (CHIP.V[X] != CHIP.V[Y]) {
       CHIP.PC += 2;
     }
-    printf("Executed 9XY0\n");
+    DEBUG_PRINT(("Executed 9XY0\n"));
     break;
   case 0xA000:
     // ANNN: Store memory address NNN in register I
     CHIP.I = NNN;
-    printf("Executed ANNN\n");
+    DEBUG_PRINT(("Executed ANNN\n"));
     break;
   case 0xB000:
     // BNNN: Jump to address NNN + V0
@@ -225,13 +230,13 @@ void run_opcode() {
     } else {
       CHIP.PC = NNN + CHIP.V[X];
     }
-    printf("Executed B000\n");
+    DEBUG_PRINT(("Executed B000\n"));
     break;
   case 0xC000:
     // CXNN: Set VX to a random number with a mask of NN
     // No ready RNG implementation; just get end of system ticks
     CHIP.V[X] = timer_get_ticks() & NN;
-    printf("Executed C000\n");
+    DEBUG_PRINT(("Executed C000\n"));
     break;
   case 0xD000:
     // DXYN: Draw a sprite at position VX, VY with N bytes of sprite data
@@ -264,7 +269,7 @@ void run_opcode() {
           break;
         }
       }
-      printf("Executed DXYN\n");
+      DEBUG_PRINT(("Executed DXYN\n"));
     }
     break;
   case 0xE000:
@@ -275,7 +280,7 @@ void run_opcode() {
       if (CHIP.KEYPAD[CHIP.V[X]]) {
         CHIP.PC += 2;
       }
-      printf("Executed EX9E\n");
+      DEBUG_PRINT(("Executed EX9E\n"));
       break;
     case 0xA1:
       // EXA1: Skip the following instruction if the key corresponding to the
@@ -283,7 +288,7 @@ void run_opcode() {
       if (!CHIP.KEYPAD[CHIP.V[X]]) {
         CHIP.PC += 2;
       }
-      printf("Executed EXA1\n");
+      DEBUG_PRINT(("Executed EXA1\n"));
       break;
     }
     break;
@@ -292,7 +297,7 @@ void run_opcode() {
     case 0x07:
       // FX07: Store the current value of the delay timer in register VX
       CHIP.V[X] = CHIP.DELAY_TIMER;
-      printf("Executed FX07\n");
+      DEBUG_PRINT(("Executed FX07\n"));
       break;
     case 0x0A:
       // FX0A: Wait for a keypress and store the result in register VX
@@ -304,29 +309,29 @@ void run_opcode() {
           break;
         }
       }
-      printf("Executed FX0A\n");
+      DEBUG_PRINT(("Executed FX0A\n"));
       break;
     case 0x15:
       // FX15: Set the delay timer to the value of register VX
       CHIP.DELAY_TIMER = CHIP.V[X];
-      printf("Executed FX15\n");
+      DEBUG_PRINT(("Executed FX15\n"));
       break;
     case 0x18:
       // FX18: Set the sound timer to the value of register VX
       CHIP.SOUND_TIMER = CHIP.V[X];
-      printf("Executed FX18\n");
+      DEBUG_PRINT(("Executed FX18\n"));
       break;
     case 0x1E:
       // FX1E: Add the value stored in register VX to register I
       CHIP.V[0xF] = (CHIP.V[X] > 0x0FFF - CHIP.I) ? 1 : 0;
       CHIP.I += CHIP.V[X];
-      printf("Executed FX1E\n");
+      DEBUG_PRINT(("Executed FX1E\n"));
       break;
     case 0x29:
       // FX29: Set I to the memory address of the sprite data corresponding to
       //       the hexadecimal digit stored in register VX
       CHIP.I = FONT_START + CHIP.V[X] * 5;
-      printf("Executed FX29\n");
+      DEBUG_PRINT(("Executed FX29\n"));
       break;
     case 0x33:
       // FX33: Store the binary-coded decimal equivalent of the value stored in
@@ -334,7 +339,7 @@ void run_opcode() {
       CHIP.MEM[CHIP.I] = CHIP.V[X] / 100;
       CHIP.MEM[CHIP.I + 1] = (CHIP.V[X] / 10) % 10;
       CHIP.MEM[CHIP.I + 2] = (CHIP.V[X] % 100) % 10;
-      printf("Executed FX33\n");
+      DEBUG_PRINT(("Executed FX33\n"));
       break;
     case 0x55:
       // FX55: Store the values of registers V0 to VX inclusive in memory
@@ -346,7 +351,7 @@ void run_opcode() {
       if (STR_LDR_LEGACY_BEHAVIOR) {
         CHIP.I += CHIP.V[X] + 1;
       }
-      printf("Executed FX55\n");
+      DEBUG_PRINT(("Executed FX55\n"));
       break;
     case 0x65:
       // FX65: Fill registers V0 to VX inclusive with the values stored in
@@ -358,7 +363,7 @@ void run_opcode() {
       if (STR_LDR_LEGACY_BEHAVIOR) {
         CHIP.I += CHIP.V[X] + 1;
       }
-      printf("Executed FX65\n");
+      DEBUG_PRINT(("Executed FX65\n"));
       break;
     }
     break;
