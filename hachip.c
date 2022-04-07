@@ -392,6 +392,9 @@ int main() {
       }
       if (CHIP.SOUND_TIMER > 0) {
         CHIP.SOUND_TIMER--;
+        play_sound(false);
+      } else {
+        play_sound(true);
       }
       last_decrement = current_tick;
     }
