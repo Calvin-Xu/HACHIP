@@ -385,20 +385,24 @@ int main() {
   while (true) {
     emulate_cycle();
     set_keys(CHIP.KEYPAD);
-    unsigned int current_tick = timer_get_ticks();
-    if (current_tick - last_decrement >= 16666) {
-      if (CHIP.DELAY_TIMER > 0) {
-        CHIP.DELAY_TIMER--;
-      }
-      if (CHIP.SOUND_TIMER > 0) {
-        CHIP.SOUND_TIMER--;
-        play_sound(false);
-      } else {
-        play_sound(true);
-      }
-      last_decrement = current_tick;
-    }
-    // timer_delay_ms(12);
+    // // printf("-----\n");
+    // // for (int i = 0; i < 16; i++) {
+    // //   printf("key %d is %s\n", i, CHIP.KEYPAD[i] ? "on" : "off");
+    // // }
+    // unsigned int current_tick = timer_get_ticks();
+    // if (current_tick - last_decrement >= 16666) {
+    //   if (CHIP.DELAY_TIMER > 0) {
+    //     CHIP.DELAY_TIMER--;
+    //   }
+    //   if (CHIP.SOUND_TIMER > 0) {
+    //     CHIP.SOUND_TIMER--;
+    //     play_sound(false);
+    //   } else {
+    //     play_sound(true);
+    //   }
+    //   last_decrement = current_tick;
+    // }
+    // // timer_delay_ms(5);
   }
   return 0;
 }
