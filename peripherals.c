@@ -144,3 +144,7 @@ void set_keys(bool *keypad) {
     }
   }
 }
+
+void play_sound(bool on) {
+  // not implemented
+}

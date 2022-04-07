@@ -13,4 +13,6 @@ void draw_pixel(int x, int y, bool is_on);
 
 void set_keys(bool *keypad);
 
+void play_sound(bool on);
+
 #endif
